@@ -1,0 +1,9 @@
+Useful bash commands
+
+ls - list files in a directory
+pwd - print working directory
+cd - change directory
+mkdir - make a new directory
+touch - create a new empty file/ edit meta data for a file
+echo - send text output to terminal or to specified file
+cat - display contents of a file/ concatenate multiple files
