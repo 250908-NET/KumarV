@@ -1,3 +1,6 @@
+using System.Security.Cryptography;
+using Microsoft.AspNetCore.Authorization.Infrastructure;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -28,7 +31,51 @@ var summaries = new[]
     "Scorching",
 };
 
-var colors = new List<string> { "Purple", "Blue", "Black", "White", "Red" };
+var colors = new List<string> { "Purple", "Blue", "Black", "White", "Red" }; //challenge 5
+
+string SimpleChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"; //challenge 7
+string ComplexChars =
+    @"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!""#$%&'()*+,-./:;<=>?@[\]^_`{|}~";
+; //challenege 7.2
+string[] WordList = new[]
+{
+    "apple",
+    "river",
+    "stone",
+    "cloud",
+    "maple",
+    "echo",
+    "frost",
+    "amber",
+    "cedar",
+    "comet",
+    "delta",
+    "pixel",
+    "quartz",
+    "raven",
+    "solar",
+    "tulip",
+    "ocean",
+    "ember",
+    "violet",
+    "wolf",
+}; //challenge 7.3
+
+string RandomFromAlphabet(int len, ReadOnlySpan<char> alphabet) //Challenge 7 helper function
+{
+    var output = new char[len];
+    for (int i = 0; i < len; i++)
+        output[i] = alphabet[RandomNumberGenerator.GetInt32(alphabet.Length)];
+    return new string(output);
+}
+
+string Memorable(int words, char sep = '-') //Challenge 7.3 helper function
+{
+    var parts = new string[words];
+    for (int i = 0; i < words; i++)
+        parts[i] = WordList[RandomNumberGenerator.GetInt32(WordList.Length)];
+    return string.Join(sep, parts);
+}
 
 app.MapGet(
         "/weatherforecast",
@@ -409,6 +456,158 @@ app.MapPost(
         colors.Add(char.ToUpperInvariant(color[0]) + color.Substring(1).ToLowerInvariant());
     }
 );
+
+//Challenge 6 Temp Converter
+
+app.MapGet(
+    "/temp/celsius-to-fahrenheit/{temp}",
+    (double temp) =>
+    {
+        double f;
+
+        f = ((temp * 9.0 / 5.0) + 32);
+
+        return f;
+    }
+);
+
+app.MapGet(
+    "/temp/fahrenheit-to-celsius/{temp}",
+    (double temp) =>
+    {
+        double c;
+
+        c = (temp - 32) * 9.0 / 5.0;
+
+        return c;
+    }
+);
+
+app.MapGet(
+    "/temp/kelvin-to-celsius/{temp}",
+    (double temp) =>
+    {
+        double k;
+
+        k = temp + 273.15;
+
+        return k;
+    }
+);
+
+app.MapGet(
+    "/temp/compare/{temp1}/{unit1}/{temp2}/{unit2}",
+    (double temp1, string type1, double temp2, string type2) =>
+    {
+        char u1 = char.ToUpperInvariant(type1.Trim()[0]);
+        char u2 = char.ToUpperInvariant(type2.Trim()[0]);
+        if (type1 == type2)
+        {
+            return $"The difference between the first temp minus the second temp is about {temp1 - temp2}";
+        }
+
+        double temp2InUnit1;
+
+        if (u1 == 'C')
+        {
+            if (u2 == 'C')
+                temp2InUnit1 = temp2;
+            else if (u2 == 'F')
+                temp2InUnit1 = (temp2 - 32.0) * 5.0 / 9.0;
+            else
+                temp2InUnit1 = temp2 - 273.15;
+
+            double difference = temp1 - temp2InUnit1; // signed diff remember to abs later
+            string relation =
+                difference == 0 ? "equal to"
+                : difference > 0 ? "hotter than"
+                : "colder than";
+            return $"{temp1:F2} C is {relation} {temp2:F2} {u2} by {Math.Abs(difference):F2} C";
+        }
+        else if (u1 == 'F')
+        {
+            if (u2 == 'C')
+                temp2InUnit1 = (temp2 * 9.0 / 5.0) + 32.0;
+            else if (u2 == 'F')
+                temp2InUnit1 = temp2;
+            else
+                temp2InUnit1 = (temp2 - 273.15) * 9.0 / 5.0 + 32.0;
+
+            double difference = temp1 - temp2InUnit1;
+            string relation =
+                difference == 0 ? "equal to"
+                : difference > 0 ? "hotter than"
+                : "colder than";
+            return $"{temp1:F2} F is {relation} {temp2:F2} {u2} by {Math.Abs(difference):F2} F";
+        }
+        else
+        {
+            if (u2 == 'C')
+                temp2InUnit1 = temp2 + 273.15;
+            else if (u2 == 'F')
+                temp2InUnit1 = (temp2 - 32.0) * 5.0 / 9.0 + 273.15;
+            else
+                temp2InUnit1 = temp2;
+
+            double difference = temp1 - temp2InUnit1;
+            string relation =
+                difference == 0 ? "equal to"
+                : difference > 0 ? "hotter than"
+                : "colder than";
+            return $"{temp1:F2} K is {relation} {temp2:F2} {u2} by {Math.Abs(difference):F2} K";
+        }
+    }
+);
+
+//Challenge #7
+
+app.MapGet("/password/simple/{length}", (int length) => RandomFromAlphabet(length, SimpleChars));
+
+app.MapGet("/password/complex/{length}", (int length) => RandomFromAlphabet(length, ComplexChars));
+
+app.MapGet("/password/memorable/{words}", (int words) => Memorable(words));
+
+app.MapGet(
+    "/password/strength/{password}",
+    (string password) =>
+    {
+        if (string.IsNullOrEmpty(password))
+            return "weak (score 0, length 0)";
+
+        int score = 0;
+        if (password.Length >= 8)
+            score++;
+        if (password.Length >= 12)
+            score++;
+
+        bool lower = false,
+            upper = false,
+            digit = false,
+            symbol = false;
+        foreach (char c in password)
+        {
+            if (char.IsLower(c))
+                lower = true;
+            else if (char.IsUpper(c))
+                upper = true;
+            else if (char.IsDigit(c))
+                digit = true;
+            else
+                symbol = true;
+        }
+        score += (lower ? 1 : 0) + (upper ? 1 : 0) + (digit ? 1 : 0) + (symbol ? 1 : 0);
+
+        string strength =
+            score <= 2 ? "weak"
+            : score <= 4 ? "fair"
+            : score <= 6 ? "strong"
+            : "very-strong";
+
+        return $"{strength} (score {score}, length {password.Length})";
+    }
+);
+
+//Challenge 8
 
 app.Run();
 
