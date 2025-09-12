@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -166,14 +167,18 @@ app.MapGet(
 app.MapGet(
     "/text/reverse/{text}",
     (string text) =>
-    {
-        string reverse = "";
-        for (int i = text.Length - 1; i >= 0; i--)
-        {
-            reverse += text[i];
-        }
+    /* string reverse = ""; O(N^2) yikes
+     for (int i = text.Length - 1; i >= 0; i--)
+     {
+         reverse += text[i];
+     }
 
-        return new { reverse };
+     return new { reverse }; */
+
+    {
+        var chars = text.ToCharArray();
+        Array.Reverse(chars);
+        return new { reverse = new string(chars) };
     }
 );
 
@@ -206,7 +211,7 @@ app.MapGet(
             }
         }
 
-        int words = text.Split(' ').Length;
+        int words = text.Trim().Split(' ').Length;
 
         return new
         {
@@ -453,7 +458,7 @@ app.MapPost(
 
         if (string.IsNullOrWhiteSpace(color)) //Normalizes input
             color = color.Trim();
-        colors.Add(char.ToUpperInvariant(color[0]) + color.Substring(1).ToLowerInvariant());
+        colors.Add(char.ToUpper(color[0]) + color.Substring(1).ToLower());
     }
 );
 
@@ -465,7 +470,7 @@ app.MapGet(
     {
         double f;
 
-        f = ((temp * 9.0 / 5.0) + 32);
+        f = (temp * 9.0 / 5.0) + 32;
 
         return f;
     }
@@ -499,8 +504,8 @@ app.MapGet(
     "/temp/compare/{temp1}/{unit1}/{temp2}/{unit2}",
     (double temp1, string type1, double temp2, string type2) =>
     {
-        char u1 = char.ToUpperInvariant(type1.Trim()[0]);
-        char u2 = char.ToUpperInvariant(type2.Trim()[0]);
+        char u1 = char.ToUpper(type1.Trim()[0]);
+        char u2 = char.ToUpper(type2.Trim()[0]);
         if (type1 == type2)
         {
             return $"The difference between the first temp minus the second temp is about {temp1 - temp2}";
@@ -608,6 +613,328 @@ app.MapGet(
 );
 
 //Challenge 8
+app.MapGet(
+    "/validate/email/{email}",
+    (string email) =>
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+        const string pattern = @"^[^\s@]+@[^\s@]+\.[^\s@]+$";
+        return Regex.IsMatch(email, pattern);
+    }
+);
+
+app.MapGet(
+    "/validate/phone/{phone}",
+    (string phone) =>
+    {
+        if (string.IsNullOrWhiteSpace(phone))
+            return false;
+
+        const string pattern = @"^(?:\+?\d{3}[-. ]?)?(?:\(\d{3}\)|\d{3})[-. ]?\d{3}[-. ]?\d{4}$"; //checks for 10 digit number, I tried to make it optionally check area code currently
+        return Regex.IsMatch(phone, pattern);
+    }
+);
+
+app.MapGet(
+    "/validate/creditcard/{credit}",
+    (string credit) =>
+    {
+        if (string.IsNullOrWhiteSpace(credit))
+            return false;
+
+        int sum = 0;
+        bool doubleIt = false;
+        int digitCount = 0;
+
+        for (int i = credit.Length - 1; i >= 0; i--)
+        {
+            char ch = credit[i];
+            if (ch == ' ' || ch == '-')
+                continue; // allow separators
+
+            if (ch < '0' || ch > '9')
+                return false; // invalid char
+            int d = ch - '0';
+
+            if (doubleIt)
+            {
+                d *= 2;
+                if (d > 9)
+                    d -= 9;
+            }
+
+            sum += d;
+            doubleIt = !doubleIt;
+            digitCount++;
+        }
+
+        return sum % 10 == 0;
+    }
+);
+
+app.MapGet(
+    "/validate/strongpassword/{password}",
+    (string password) =>
+    {
+        if (string.IsNullOrWhiteSpace(password))
+            return false;
+
+        const string pattern = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])(?=\S+$).{12,}$"; //this regex checks 1 capital 1 lowercase 1 special 1 number and length >= 12
+        return Regex.IsMatch(password, pattern);
+    }
+);
+
+//Challenge 9
+app.MapGet(
+    "/convert/length/{value}/{fromUnit}/{toUnit}",
+    (double value, string fromUnit, string toUnit) =>
+    {
+        if (fromUnit == toUnit)
+            return (object)value;
+
+        // meters
+        if (fromUnit == "meters")
+        {
+            if (toUnit == "feet")
+                return (object)(value * 3.281);
+            if (toUnit == "inches")
+                return (object)(value * 39.37);
+            return "Invalid toUnit. From 'meters' you can convert to: feet, inches. Valid units: meters, feet, inches.";
+        }
+
+        // feet
+        if (fromUnit == "feet")
+        {
+            if (toUnit == "meters")
+                return (object)(value / 3.281);
+            if (toUnit == "inches")
+                return (object)(value * 12);
+            return "Invalid toUnit. From 'feet' you can convert to: meters, inches. Valid units: meters, feet, inches.";
+        }
+
+        // inches
+        if (fromUnit == "inches")
+        {
+            if (toUnit == "meters")
+                return (object)(value / 39.37);
+            if (toUnit == "feet")
+                return (object)(value / 12);
+            return "Invalid toUnit. From 'inches' you can convert to: meters, feet. Valid units: meters, feet, inches.";
+        }
+
+        return "Invalid fromUnit. Valid units: meters, feet, inches.";
+    }
+);
+
+app.MapGet(
+    "/convert/weight/{value}/{fromUnit}/{toUnit}",
+    (double value, string fromUnit, string toUnit) =>
+    {
+        if (fromUnit == toUnit)
+            return (object)value;
+        //kg
+        if (fromUnit == "kg")
+        {
+            if (toUnit == "lbs")
+                return (object)(value * 2.20462);
+            if (toUnit == "ounces")
+                return (object)(value * 35.274);
+            return "Invalid toUnit. From 'kg' you can convert to: lbs, ounces. Valid units: kg, lbs, ounces.";
+        }
+        //lbs
+        if (fromUnit == "lbs")
+        {
+            if (toUnit == "kg")
+                return (object)(value / 2.20462);
+            if (toUnit == "ounces")
+                return (object)(value * 16);
+            return "Invalid toUnit. From 'lbs' you can convert to: kg, ounces. Valid units: kg, lbs, ounces.";
+        }
+        //ounce
+        if (fromUnit == "ounces")
+        {
+            if (toUnit == "kg")
+                return (object)(value / 35.274);
+            if (toUnit == "lbs")
+                return (object)(value / 16);
+            return "Invalid toUnit. From 'ounces' you can convert to: kg, lbs. Valid units: kg, lbs, ounces.";
+        }
+
+        return "Invalid fromUnit. Valid units: kg, lbs, ounces.";
+    }
+);
+
+app.MapGet(
+    "/convert/volume/{value}/{fromUnit}/{toUnit}",
+    (double value, string fromUnit, string toUnit) =>
+    {
+        if (fromUnit == toUnit)
+            return (object)value;
+
+        // liters
+        if (fromUnit == "liters")
+        {
+            if (toUnit == "gallons")
+                return (object)(value * 0.264172);
+            if (toUnit == "cups")
+                return (object)(value * 4.227);
+            return "Invalid toUnit. From 'liters' you can convert to: gallons, cups. Valid units: liters, gallons, cups.";
+        }
+
+        // gallons
+        if (fromUnit == "gallons")
+        {
+            if (toUnit == "liters")
+                return (object)(value * 3.785);
+            if (toUnit == "cups")
+                return (object)(value * 16);
+            return "Invalid toUnit. From 'gallons' you can convert to: liters, cups. Valid units: liters, gallons, cups.";
+        }
+
+        // cups
+        if (fromUnit == "cups")
+        {
+            if (toUnit == "liters")
+                return (object)(value / 4.227);
+            if (toUnit == "gallons")
+                return (object)(value / 16);
+            return "Invalid toUnit. From 'cups' you can convert to: liters, gallons. Valid units: liters, gallons, cups.";
+        }
+
+        return "Invalid fromUnit. Valid units: liters, gallons, cups.";
+    }
+);
+
+app.MapGet(
+    "/convert/list-units/{type}",
+    (string type) =>
+    {
+        type = type.ToLower();
+
+        if (type == "length")
+            return "meters,feet,inches";
+        if (type == "weight")
+            return "kg,lbs,ounces";
+        if (type == "volume")
+            return "liters,gallons,cups";
+
+        return "supported types: length,weight,volume";
+    }
+);
+
+//Challenege 10
+var forecasts = new List<WeatherForecast>();
+
+// GET
+app.MapGet("/forecast", () => forecasts.ToArray());
+
+// POST
+app.MapPost(
+    "/weatherforecast",
+    (WeatherForecast forecast) =>
+    {
+        forecasts.Add(forecast);
+        return forecast;
+    }
+/* example weather forecast json
+{
+"date": "2025-09-12",
+"temperatureC": 22,
+"summary": "Mild"
+}
+*/
+);
+
+// DELETE
+app.MapDelete(
+    "/forecast/{date}",
+    (DateOnly date) =>
+    {
+        int removed = forecasts.RemoveAll(f => f.Date == date);
+        return removed;
+    }
+);
+
+//Challenege 11
+
+var sessions = new Dictionary<int, int>(); //<sessionId, guess>
+int nextId = 0; // starting with 0 since I do ++nextId when giving out session ids
+
+app.MapPost(
+    "/game/start",
+    () =>
+    {
+        var id = ++nextId;
+        var secret = Random.Shared.Next(1, 101); // 1-100 inclusive
+        sessions[id] = secret;
+
+        return new { sessionId = id, message = "Game started! Guess a number 1-100." };
+    }
+);
+
+app.MapPost(
+    "/game/guess-number",
+    (GuessIn g) =>
+    {
+        if (!sessions.TryGetValue(g.sessionId, out var answer))
+            return $"Session {g.sessionId} not found. Start a new game.";
+
+        if (g.guess == answer)
+        {
+            sessions.Remove(g.sessionId); // end
+            return $"Correct! Session {g.sessionId} ended.";
+        }
+
+        return g.guess < answer ? "Guess Higher" : "Guess Lower";
+    }
+);
+
+app.MapGet(
+    "/game/rock-paper-scissors/{choice}",
+    (string choice) =>
+    {
+        var opts = new[] { "rock", "paper", "scissors" };
+        var user = choice.ToLower();
+        if (Array.IndexOf(opts, user) < 0) //validation
+            return "Choose rock, paper, or scissors.";
+
+        var cpu = opts[Random.Shared.Next(3)];
+        if (user == cpu)
+            return $"Tie! ({cpu})";
+        bool userWins =
+            (user == "rock" && cpu == "scissors")
+            || (user == "paper" && cpu == "rock")
+            || (user == "scissors" && cpu == "paper");
+        return userWins ? $"You win! (cpu: {cpu})" : $"You lose! (cpu: {cpu})";
+    }
+);
+
+app.MapGet(
+    "/game/dice/{sides}/{count}",
+    (int sides, int count) =>
+    {
+        if (sides < 2 || count < 1)
+            return [];
+        var rolls = new int[count];
+        for (int i = 0; i < count; i++)
+            rolls[i] = Random.Shared.Next(1, sides + 1);
+        return rolls;
+    }
+);
+
+app.MapGet(
+    "/game/coin-flip/{count}",
+    (int count) =>
+    {
+        if (count < 1)
+            return [];
+        var flips = new string[count];
+        for (int i = 0; i < count; i++)
+            flips[i] = Random.Shared.Next(2) == 0 ? "H" : "T";
+        return flips;
+    }
+);
 
 app.Run();
 
@@ -615,3 +942,5 @@ record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
 {
     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }
+
+record GuessIn(int sessionId, int guess);
