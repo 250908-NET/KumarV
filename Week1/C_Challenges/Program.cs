@@ -176,7 +176,7 @@ app.MapGet(
      return new { reverse }; */
 
     {
-        var chars = text.ToCharArray();
+        var chars = text.ToCharArray(); //I believe this is O(N)
         Array.Reverse(chars);
         return new { reverse = new string(chars) };
     }
@@ -202,22 +202,61 @@ app.MapGet(
     "/text/count/{text}",
     (string text) =>
     {
-        int vowel = 0;
+        /* int vowel = 0;
+         for (int i = 0; i < text.Length; i++)
+         {
+             if ("aeiouy".Contains(text[i]))        //very inefficient due to this line
+             {
+                 vowel++;
+             }
+         }
+
+         int words = text.Trim().Split(' ').Length;
+
+         return new
+         {
+             characters = text.Length,
+             vowelCount = vowel,
+             wordCount = words,
+         }; */
+
+        int vowelCount = 0;
+        int wordCount = 0;
+        bool inWord = false;
+
         for (int i = 0; i < text.Length; i++)
         {
-            if ("aeiouy".Contains(text[i]))
+            char c = text[i];
+
+            // vowel check
+            switch (char.ToUpper(c))
             {
-                vowel++;
+                case 'A':
+                case 'E':
+                case 'I':
+                case 'O':
+                case 'U':
+                case 'Y':
+                    vowelCount++;
+                    break;
+            }
+
+            // spaces are used to count words
+            if (char.IsWhiteSpace(c))
+            {
+                inWord = false;
+            }
+            else if (!inWord)
+            {
+                inWord = true;
+                wordCount++;
             }
         }
-
-        int words = text.Trim().Split(' ').Length;
-
         return new
         {
             characters = text.Length,
-            vowelCount = vowel,
-            wordCount = words,
+            vowelCount,
+            wordCount,
         };
     }
 );
@@ -226,20 +265,39 @@ app.MapGet(
     "/text/palindrome/{text}",
     (string text) =>
     {
-        string reverse = "";
-        for (int i = text.Length - 1; i >= 0; i--)
+        /* string reverse = "";
+         for (int i = text.Length - 1; i >= 0; i--)
+         {
+             reverse += text[i];                //Yikes this makes everything O(N^2)
+         }
+
+         if (reverse.ToLower() == text.ToLower())
+         {
+             return new { isPalindrome = true };
+         }
+         else
+         {
+             return new { isPalindrome = false };
+         } */
+
+        int i = 0,
+            j = text.Length - 1;
+        bool isPalindrome = true;
+
+        while (i < j)
         {
-            reverse += text[i];
+            char a = char.ToUpper(text[i]);
+            char b = char.ToUpper(text[j]);
+            if (a != b)
+            {
+                isPalindrome = false;
+                break;
+            }
+            i++;
+            j--;
         }
 
-        if (reverse.ToLower() == text.ToLower())
-        {
-            return new { isPalindrome = true };
-        }
-        else
-        {
-            return new { isPalindrome = false };
-        }
+        return new { isPalindrome };
     }
 );
 
