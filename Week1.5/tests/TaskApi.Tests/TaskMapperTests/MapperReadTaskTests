@@ -1,0 +1,42 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using TaskApi.Dtos;
+using TaskApi.Mappers;   // <-- your extension methods live here
+using TaskApi.Models;
+using Xunit;
+
+namespace TaskApi.Tests;
+
+public class MapperReadTaskTests
+{
+    [Fact]
+    public void ToReadDto_Maps_All_Fields_Correctly()
+    {
+        
+        var entity = new TaskItem
+        {
+            Id = 42,
+            Title = "Buy milk",
+            Description = "2% carton",
+            IsComplete = true,
+            Priority = Priority.High,
+            DueDate = new DateTime(2030, 5, 1, 0, 0, 0, DateTimeKind.Utc),
+            CreatedAt = new DateTime(2029, 12, 31, 23, 59, 59, DateTimeKind.Utc),
+            UpdatedAt = new DateTime(2030, 1, 1, 0, 0, 1, DateTimeKind.Utc)
+        };
+
+        
+        TaskReadDto dto = entity.ToReadDto();
+
+        // Assert
+        Assert.Equal(42, dto.Id);
+        Assert.Equal("Buy milk", dto.Title);
+        Assert.Equal("2% carton", dto.Description);
+        Assert.True(dto.IsComplete);
+        Assert.Equal(Priority.High, dto.Priority);
+        Assert.Equal(new DateTime(2030, 5, 1, 0, 0, 0, DateTimeKind.Utc), dto.DueDate);
+        Assert.Equal(new DateTime(2029, 12, 31, 23, 59, 59, DateTimeKind.Utc), dto.CreatedAt);
+        Assert.Equal(new DateTime(2030, 1, 1, 0, 0, 1, DateTimeKind.Utc), dto.UpdatedAt);
+    }
+}

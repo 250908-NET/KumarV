@@ -10,7 +10,7 @@ public class TaskReadDto
 
     public string? Description { get; set; }
 
-    public bool IsCompleted { get; set; } //undecided if this should be in here tbh
+    public bool IsComplete { get; set; } //undecided if this should be in here tbh
 
     public Priority Priority { get; set; } //not nullable since default medium
 
