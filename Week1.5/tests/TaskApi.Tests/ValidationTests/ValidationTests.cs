@@ -67,4 +67,40 @@ public class ValidationTests
                 || msg.Contains("100")
         );
     }
+
+    [Fact]
+    public void TaskCreateDto_OptionalFields_CanBeNull()
+    {
+        var dto = new TaskCreateDto
+        {
+            Title = "Only title required",
+            Description = null,
+            Priority = null,
+            DueDate = null,
+        };
+
+        var (ok, errors) = TaskValidator.Validate(dto);
+
+        Assert.True(ok);
+        Assert.Empty(errors);
+    }
+
+    [Fact]
+    public void TaskUpdateDto_Title_Required_Fails()
+    {
+        var dto = new TaskUpdateDto
+        {
+            Title = "", // empty so required fails
+            IsComplete = false,
+        };
+
+        var (ok, errors) = TaskValidator.Validate(dto);
+
+        Assert.False(ok);
+        Assert.Contains(nameof(TaskUpdateDto.Title), errors.Keys);
+        Assert.Contains(
+            errors[nameof(TaskUpdateDto.Title)],
+            m => m.Contains("required", StringComparison.OrdinalIgnoreCase)
+        );
+    }
 }

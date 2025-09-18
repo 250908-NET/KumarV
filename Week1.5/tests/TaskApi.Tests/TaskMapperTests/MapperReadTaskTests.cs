@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TaskApi.Dtos;
-using TaskApi.Mappers;   
+using TaskApi.Mappers;
 using TaskApi.Models;
 using Xunit;
 
@@ -13,7 +13,6 @@ public class MapperReadTaskTests
     [Fact]
     public void ToReadDto_Maps_All_Fields_Correctly()
     {
-
         var entity = new TaskItem
         {
             Id = 42,
@@ -23,9 +22,8 @@ public class MapperReadTaskTests
             Priority = Priority.High,
             DueDate = new DateTime(2030, 5, 1, 0, 0, 0, DateTimeKind.Utc),
             CreatedAt = new DateTime(2029, 12, 31, 23, 59, 59, DateTimeKind.Utc),
-            UpdatedAt = new DateTime(2030, 1, 1, 0, 0, 1, DateTimeKind.Utc)
+            UpdatedAt = new DateTime(2030, 1, 1, 0, 0, 1, DateTimeKind.Utc),
         };
-
 
         TaskReadDto dto = entity.ToReadDto();
 
@@ -39,17 +37,14 @@ public class MapperReadTaskTests
         Assert.Equal(new DateTime(2029, 12, 31, 23, 59, 59, DateTimeKind.Utc), dto.CreatedAt);
         Assert.Equal(new DateTime(2030, 1, 1, 0, 0, 1, DateTimeKind.Utc), dto.UpdatedAt);
     }
-    
-        [Fact]
+
+    [Fact]
     public void ToReadDto_Returns_New_Instance_Not_Aliasing_Entity()
     {
-        
         var entity = new TaskItem { Title = "Original" };
 
-        
         var dto = entity.ToReadDto();
 
-        
         entity.Title = "Changed";
 
         // Dto should not change result based on reference

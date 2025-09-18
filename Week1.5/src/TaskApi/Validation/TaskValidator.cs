@@ -8,7 +8,7 @@ public static class TaskValidator
     {
         var ctx = new ValidationContext(model); //which obj
         var results = new List<ValidationResult>();
-        var valid = Validator.TryValidateObject(model, ctx, results, validateAllProperties: true);
+        var valid = Validator.TryValidateObject(model, ctx, results, validateAllProperties: true); //this is what checks annotations
 
         var dict = results
             .GroupBy(r => r.MemberNames.FirstOrDefault() ?? string.Empty)
