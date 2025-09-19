@@ -12,7 +12,7 @@ public class TaskItem
 {
     public int Id { get; set; }
 
-    public string Title { get; set; } = string.Empty;
+    public string Title { get; set; } = default!;
 
     public string? Description { get; set; }
 
@@ -25,4 +25,6 @@ public class TaskItem
     public DateTime CreatedAt { get; set; } = DateTime.Now;
 
     public DateTime UpdatedAt { get; set; } = DateTime.Now;
+
+    public string UserId { get; set; } = default!; //new userId
 }
