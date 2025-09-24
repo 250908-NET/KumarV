@@ -1,3 +1,4 @@
+using Deadlock.Api.Data;
 using Deadlock.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,6 +11,8 @@ string CS = File.ReadAllText("../connection_string.env");
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddDbContext<DeadlockDbContext>(options => options.UseSqlServer(CS));
 
 var app = builder.Build();
 

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Deadlock.Api.Models;
 
-public enum Priority
+public enum Color
 {
     Orange = 0,
     Purple = 1,
@@ -16,6 +16,12 @@ public class Item
 
     [Required, MaxLength(50)]
     public string Name { get; set; }
+
+    [Required]
+    public int Price { get; set; }
+
+    [Required]
+    public Color Color { get; set; }
 
     public List<Build> Builds { get; set; } = new();
 }
