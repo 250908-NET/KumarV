@@ -14,5 +14,8 @@ public class Build
 
     public List<Item> Items { get; set; } = new();
 
-    public Hero Hero { get; set; }
+    public Hero Hero { get; set; } = null!; //intended to be required
+
+    //[Required] unneeded since ints in EF core automatically required?
+    public int HeroId { get; set; }
 }

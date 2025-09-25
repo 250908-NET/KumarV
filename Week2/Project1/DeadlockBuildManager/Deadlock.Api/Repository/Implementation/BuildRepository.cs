@@ -8,7 +8,7 @@ public class BuildRepository : IBuildRepository
 {
     private readonly DeadlockDbContext _context;
 
-    private BuildRepository(DeadlockDbContext context)
+    public BuildRepository(DeadlockDbContext context)
     {
         _context = context;
     }

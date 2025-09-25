@@ -1,6 +1,12 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Deadlock.Api.Data;
+using Deadlock.Api.DTO;
 using Deadlock.Api.Models;
+using Deadlock.Api.Repository;
+using Deadlock.Api.Service;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +19,19 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<DeadlockDbContext>(options => options.UseSqlServer(CS));
+
+builder.Services.AddScoped<IHeroRepository, HeroRepository>();
+builder.Services.AddScoped<IHeroService, HeroService>();
+
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+});
+
+//serilogger
+Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(builder.Configuration).CreateLogger(); // read from appsettings.json
+builder.Host.UseSerilog();
 
 var app = builder.Build();
 
@@ -35,6 +54,29 @@ app.MapGet(
     }
 );
 
+/* ******************************************************************************** */
+//testing HERO apis
+app.MapGet(
+    "/heroes",
+    async (ILogger<Program> logger, IHeroService service) =>
+    {
+        logger.LogInformation("Getting all heroes");
+        return Results.Ok(await service.GetAllAsync());
+    }
+);
+
+app.MapPost(
+    "/heroes",
+    async (ILogger<Program> logger, IHeroService service, HeroCreateDto dto) =>
+    {
+        logger.LogInformation($"Creating hero  named {dto.Name}");
+        var hero = new Hero { Name = dto.Name };
+        Hero createdHero = await service.CreateAsync(hero);
+        return Results.Created($"/heroes/{hero.Id}", createdHero);
+    }
+);
+
+/* ******************************************************************************** */
 app.UseHttpsRedirection();
 
 app.Run();
