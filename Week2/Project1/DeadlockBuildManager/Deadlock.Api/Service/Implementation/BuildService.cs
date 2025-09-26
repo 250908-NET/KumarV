@@ -7,8 +7,10 @@ public class BuildService : IBuildService
 {
     private readonly IBuildRepository _repo;
 
-    public BuildService(IBuildRepository repo)
+    public BuildService(IBuildRepository repo) //constructor for our service
     {
+        if (repo == null)
+            throw new ArgumentNullException(nameof(repo)); //uhoh
         _repo = repo;
     }
 
@@ -16,9 +18,11 @@ public class BuildService : IBuildService
 
     public async Task<Build?> GetByIdAsync(int id) => await _repo.GetByIdAsync(id);
 
-    public async Task CreateAsync(Build build)
-    {
-        await _repo.AddAsync(build);
-        await _repo.SaveChangesAsync();
-    }
+    public async Task<Build> CreateAsync(Build Build) => await _repo.AddAsync(Build); //might have to initialize a Build for this but lets try anonymous func
+
+    public async Task<bool> UpdateAsync(int id, Build Build) => await _repo.UpdateAsync(id, Build);
+
+    public async Task<bool> DeleteAsync(int id) => await _repo.DeleteAsync(id);
+
+    public async Task<bool> Exists(int id) => await _repo.Exists(id);
 }

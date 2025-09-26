@@ -6,5 +6,9 @@ public interface IBuildService
 {
     public Task<List<Build>> GetAllAsync();
     public Task<Build?> GetByIdAsync(int id);
-    public Task CreateAsync(Build build);
+    public Task<Build> CreateAsync(Build Build);
+
+    public Task<bool> UpdateAsync(int id, Build Build);
+    public Task<bool> DeleteAsync(int id);
+    public Task<bool> Exists(int id);
 }
